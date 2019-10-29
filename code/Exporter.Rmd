@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+````{r}
+library(RMySQL)
+```
+
+# Para exportar os dados do banco de dados para csv
+
+# Todos os dados
+```{r}
+db <- dbConnect(RMySQL::MySQL(), user = 'root', password = 'root', dbname = 'tcc', host = '127.0.0.1', port = 3306)
+query_str <- "SELECT m.name as nome, a.name as artista, m.year as ano, m.lyric as letra FROM music as m INNER JOIN artists as a ON m.artist_id = a.id"
+query <- dbSendQuery(db, query_str)
+dataset <- fetch(query, n= 40000)
+
+
+write.csv2(dataset, "dataset/musicas_de_forro_com_letras.csv")
+
+
+dbDisconnect(db)
+
+
+```
+
+
+# Somente letras que possuem data de lançamento
+```{r}
+db <- dbConnect(RMySQL::MySQL(), user = 'root', password = 'root', dbname = 'tcc', host = '127.0.0.1', port = 3306)
+query_str <- "SELECT m.name as nome, a.name as artista, m.year as ano, m.lyric as letra FROM music as m INNER JOIN artists as a ON m.artist_id = a.id WHERE m.year is not null"
+query <- dbSendQuery(db, query_str)
+dataset <- fetch(query, n = 40000)
+
+write.csv2(dataset, "dataset/musicas_de_forro_com_letras_e_datas.csv")
+
+dbDisconnect(db)
+
+
+```
