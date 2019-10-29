@@ -1,9 +1,13 @@
 ---
 title: "Dataset evaluation"
-output: html_notebook
+output:
+  html_notebook: default
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
-```{r}
+```{r results='hide', message=FALSE, warning=FALSE}
 library(dplyr, warn.conflicts = FALSE)
 library(formattable)
 library(kableExtra)
@@ -22,7 +26,7 @@ library(lexiconPT)
 colors <- c("#E69F00", "#56B4E9", "#009E73", "#CC79A7", "#D55E00")
 ```
 
-```{r}
+```{r results='hide', message=FALSE, warning=FALSE}
 #musicas <- read.csv2("../dataset/musicas_de_forro_com_letras_e_datas.csv")
 
 musicas <- read.csv("../dataset/musicas_de_forro_com_letras_e_datas.csv", sep = ";")
@@ -32,7 +36,7 @@ musicas <- read.csv("../dataset/musicas_de_forro_com_letras_e_datas.csv", sep = 
 
 
 # Organização dos dados
-```{r}
+```{r results='hide', message=FALSE, warning=FALSE}
 
 musicas$ano <- musicas$ano %>% as.character %>% as.numeric
 
@@ -51,8 +55,6 @@ musicas <- musicas %>%
 musicas$letra <- musicas$letra %>% str_replace_all("[\r\n]", " ")
 
 palavras_indesejadas = c("repeat", "repete", "ltda", "lyrics", "instrumental", "repete", "edições", "musical", "musicais", "site", "oficial", "fonte", "intro", "refrão", "crédito", "enviado", "editora", "contribuição", "leandrostz", "mariano", "richards", "halen", "bernie", "taupin", "2x", "(2x)")
-
-head(stopwords('pt'), 15)
 
 stopwords_pt <- data.frame(word = tm::stopwords("portuguese"))
 
@@ -87,7 +89,7 @@ theme_lyrics <- function()
 
 É evidante que os conjunto de dados possui mais músicas a partir da década de 90. Esse ponto é importante para conseguirmos avaliar mais adequadamente as análises que faremos a seguir. Também podemos notar que no decorrer do tempo, a quantidade de músicas de vorró evoluiu de forma acentuada. Isso pode ter vários motivos que vão desde a facilidade da forma de como músicas podem ser criadas a partir dos anos 90 até a facilidade de distribuição dessas composições.
 
-```{r}
+```{r results='hide', message=FALSE, warning=FALSE}
 musicas %>%
   filter(decada != "NA") %>%
   group_by(decada) %>%
@@ -106,7 +108,7 @@ Em uma análise inicial mais rasa podemos visualizar a quantidade geral de palav
 Apesar de ser uma análise simples, ja podemos observar algumas palavras que continuam sendo utilizadas, apesar dos anos.
 
 
-````{r}
+````{r results='hide', message=FALSE, warning=FALSE}
 musicas_filtradas <- musicas %>%
   unnest_tokens(word, letra) %>%
   anti_join(stopwords_pt) %>%
@@ -145,7 +147,8 @@ ContaPalavrasUtilizadasPorDecada("2010s")
 
 # Núvens de palavras em relação a quantidade de palavras utilizadas por década
 
-```{r}
+```{r message=FALSE, warning=FALSE}
+
 quantidade_palavras <- musicas_filtradas %>%
   count(word, sort = TRUE)
 
@@ -159,20 +162,21 @@ filtraMusicasPorDecada <- function(d) {
   
   result <- ds_filtered %>%
   unnest_tokens(word, letra) %>%
-  anti_join(stopwords_pt) %>%
+  anti_join(stopwords_pt, by="word") %>%
   distinct() %>%
   filter(!word %in% palavras_indesejadas) %>%
   filter(nchar(word) > 3)
   return(result)
 }
 
-wordcloud2((filtraMusicasPorDecada("1950s") %>%  ContaPalavras)[1:200, ], size = .4)
-wordcloud2((filtraMusicasPorDecada("1960s") %>%  ContaPalavras)[1:200, ], size = .4)
-wordcloud2((filtraMusicasPorDecada("1970s") %>%  ContaPalavras)[1:300, ], size = .4)
-wordcloud2((filtraMusicasPorDecada("1980s") %>%  ContaPalavras)[1:300, ], size = .4)
-wordcloud2((filtraMusicasPorDecada("1990s") %>%  ContaPalavras)[1:300, ], size = .4)
-wordcloud2((filtraMusicasPorDecada("2000s") %>%  ContaPalavras)[1:300, ], size = .4)
-wordcloud2((filtraMusicasPorDecada("2010s") %>%  ContaPalavras)[1:300, ], size = .4)
+
+wordcloud2((filtraMusicasPorDecada("1950s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
+wordcloud2((filtraMusicasPorDecada("1960s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
+wordcloud2((filtraMusicasPorDecada("1970s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
+wordcloud2((filtraMusicasPorDecada("1980s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
+wordcloud2((filtraMusicasPorDecada("1990s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
+wordcloud2((filtraMusicasPorDecada("2000s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
+wordcloud2((filtraMusicasPorDecada("2010s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
 
 ```
 
@@ -182,8 +186,8 @@ Podemos visualizar nos gráficos a seguir, quais são as palavras que continuam 
 
 As palavras de interesse, sobem para o topo de cada gráfico. Em geral podemos perceber a permanencia de palavras como: "amor", "coração", "gente" etc.
 
-```{r}
-timeless_words <- musicas_filtradas %>% 
+```{r results='hide', message=FALSE, warning=FALSE}
+palavras_atemporais <- musicas_filtradas %>% 
   filter(decada != 'NA') %>%
   group_by(decada) %>%
   count(word, decada, sort = TRUE) %>%
@@ -192,14 +196,14 @@ timeless_words <- musicas_filtradas %>%
   arrange(decada,n) %>%
   mutate(row = row_number()) 
 
-timeless_words %>%
+palavras_atemporais %>%
   ggplot(aes(row, n, fill = decada)) +
     geom_col(show.legend = NULL) +
     labs(x = NULL, y = "Palavras") +
     ggtitle("Palavras Atemporaris") + 
     theme_lyrics() +  
     facet_wrap(~decada, scales = "free", ncol = 5) +
-    scale_x_continuous(breaks = timeless_words$row, labels = timeless_words$word) +
+    scale_x_continuous(breaks = palavras_atemporais$row, labels = palavras_atemporais$word) +
     coord_flip()
 ```
 
@@ -209,9 +213,9 @@ Palavras maiores podem acrescentar complexidade nas letras e também podem indic
 
 O ponto de observação principal aqui é a relação entre quantidade de palavras por música e o tamanho das palavras. Podemos observar que são dois pontos inversamente proporcionais onde, quanto mais palavras a letra possui, menor o tamanho das palavras.
 
-<ref para isso>
+(<ref para isso>)
 
-```{r}
+```{r results='hide', message=FALSE, warning=FALSE}
 
 ContaTamangoDasPalavrasPorDecada <- function(d) {
   ds <- musicas %>% filter(decada == d)
@@ -244,26 +248,6 @@ PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("2000s"), "2000s")
 
 ```
 
-
-
-Nota: Preciso remover essas palavras o dataset
-
-```{r}
-wc <- all_word_lengths %>%
-  ungroup() %>%
-  select(word, word_length) %>%
-  distinct() %>%
-  arrange(desc(word_length))
-
-wordcloud2(wc[1:300, ], 
-           size = .15,
-           minSize = .0005,
-           ellipticity = .3, 
-           rotateRatio = 1, 
-           fontWeight = "bold")
-```
-
-
 # Densidade e Diversidade Lexical / Distribuição e Diversidade do vocabulário
 
 Podemos observar o gráfico de distribuição das palavras no decorrer do tempo, para visualizar como as palavras exclusivas se distribuem no decorrer do tempo e avaliar a tendência das composições em relação a repetição de palavras no decorrer do tempo.
@@ -273,7 +257,7 @@ Sabendo que a quantidade de letras passou por um crescimento acentuado no decorr
 Na diversidade de palavras, o gráfico demonstra a média de palavras únicas ao longo do tempo. Reforça a avaliação baseada na densidade e nos indica como as palavras únicas evoluíram ao longo do tempo em termos de quantidade.
 
 
-```{r}
+```{r results='hide', message=FALSE, warning=FALSE}
 densidade_lexical_por_ano <- musicas %>%
   filter(decada != "NA") %>%
   unnest_tokens(word, letra) %>%
@@ -339,7 +323,7 @@ IDF: Frequência inversa por letra
 A frequência é calculada por: TF - IFD = TF * IDF, onde FDI é a inversa de DF 1 / DF
 
 As palavras mais comuns devem ter o seu IDF e TF * IDF com o valor zero.
-```{r}
+```{r results='hide', message=FALSE, warning=FALSE}
 palavras_populares <- musicas %>%
   unnest_tokens(word, letra) %>%
   distinct() %>%
@@ -354,7 +338,7 @@ head(palavras_populares)
 
 # Visualização enterior com gráficos
 
-```{R}
+```{r results='hide', message=FALSE, warning=FALSE}
 
 tf_idf_palavras_decadas <- musicas %>%
   unnest_tokens(word, letra) %>%
@@ -386,19 +370,19 @@ top_tf_idf_palavras_decadas %>%
 
 # Núvem de palavras por TF-IDF
 
-```{R}
+```{r message=FALSE, warning=FALSE}
 wc <- tf_idf_palavras_decadas %>%
   arrange(desc(tf_idf)) %>%
   select(word, tf_idf)
 
-wordcloud2(wc[1:300, ], 
+wordcloud2(wc[1:200, ], 
            color = "random-dark",
-           minSize = .005, 
+           minSize = .05, 
            ellipticity = .6, 
            rotateRatio = 1, 
            size = .1, 
            fontWeight = "bold", 
-           gridSize = 2 )
+           gridSize = 1 )
 ```
 
 # Analise de sentimento <opcional>
