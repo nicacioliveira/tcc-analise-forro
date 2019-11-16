@@ -9,6 +9,7 @@ output:
 
 ```{r results='hide', message=FALSE, warning=FALSE}
 library(dplyr, warn.conflicts = FALSE)
+library(ggplot2)
 library(formattable)
 library(kableExtra)
 library(tidyverse)
@@ -36,6 +37,7 @@ musicas <- read.csv("../dataset/musicas_de_forro_com_letras_e_datas.csv", sep = 
 
 
 # Organização dos dados
+
 ```{r results='hide', message=FALSE, warning=FALSE}
 
 musicas$ano <- musicas$ano %>% as.character %>% as.numeric
@@ -179,13 +181,6 @@ wordcloud2((filtraMusicasPorDecada("2000s") %>%  ContaPalavras)[1:100, ], size =
 wordcloud2((filtraMusicasPorDecada("2010s") %>%  ContaPalavras)[1:100, ], size = .4, options(warn = 0))
 
 ```
-
-# Palavras Atemporais
-
-Podemos visualizar nos gráficos a seguir, quais são as palavras que continuam sendo utilizadas independente do decorrer do tempo.
-
-As palavras de interesse, sobem para o topo de cada gráfico. Em geral podemos perceber a permanencia de palavras como: "amor", "coração", "gente" etc.
-
 ```{r results='hide', message=FALSE, warning=FALSE}
 palavras_atemporais <- musicas_filtradas %>% 
   filter(decada != 'NA') %>%
@@ -199,8 +194,8 @@ palavras_atemporais <- musicas_filtradas %>%
 palavras_atemporais %>%
   ggplot(aes(row, n, fill = decada)) +
     geom_col(show.legend = NULL) +
-    labs(x = NULL, y = "Palavras") +
-    ggtitle("Palavras Atemporaris") + 
+    labs(x = NULL, y = NULL) +
+    ggtitle("Palavras Atemporais") + 
     theme_lyrics() +  
     facet_wrap(~decada, scales = "free", ncol = 5) +
     scale_x_continuous(breaks = palavras_atemporais$row, labels = palavras_atemporais$word) +
@@ -235,16 +230,16 @@ PlotaTamanhosDasPalavras <- function(word_lengths, decada) {
   geom_histogram(aes(fill = ..count..), breaks = seq(1,25, by = 2),
   show.legend = FALSE) + 
   xlab("Tamanho das palavras") + ylab("Quantidade das palavras") +
-  ggtitle(paste("Distribuição do tamanho das palavras a década de ")) +
   theme(plot.title = element_text(hjust = 0.5), panel.grid.minor = element_blank())
 }
 
-PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1950s"), "1950s")
-PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1960s"), "1960s")
-PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1970s"), "1970s")
-PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1980s"), "1980s")
-PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1990s"), "1990s")
-PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("2000s"), "2000s")
+PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1950s"), "1950")
+PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1960s"), "1960")
+PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1970s"), "1970")
+PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1980s"), "1980")
+PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("1990s"), "1990")
+PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("2000s"), "2000")
+PlotaTamanhosDasPalavras(ContaTamangoDasPalavrasPorDecada("2010s"), "2010")
 
 ```
 
@@ -278,7 +273,6 @@ densidade_lexical_por_ano %>%
                 se = FALSE,
                 color = "blue", 
                 lwd = 2, method = 'gam') +
-    ggtitle("Densidade lexical") + 
     xlab("") + 
     ylab("") +
     scale_color_manual(values = colors) +
@@ -301,7 +295,6 @@ diversidadelexical_por_ano %>%
     stat_smooth(color = "black", se = FALSE, method = "lm") +
     geom_smooth(aes(x = ano, y = lex_diversity), se = FALSE,
                 color = "blue", lwd = 2, method = 'gam') +
-    ggtitle("Diversidade lexical") +
     xlab("") + 
     ylab("") +
     scale_color_manual(values = colors) +
@@ -329,11 +322,13 @@ palavras_populares <- musicas %>%
   distinct() %>%
   filter(!word %in% palavras_indesejadas) %>%
   filter(nchar(word) > 3) %>%
-  count(ano, word, sort = TRUE) %>%
+  count(decada, word, sort = TRUE) %>%
   ungroup() %>%
-  bind_tf_idf(word, ano, n)
+  bind_tf_idf(word, decada, n)
 
-head(palavras_populares)
+head(palavras_populares) %>%
+  kable(bootstrap_options = "striped", full_width = F, format = "html", table.attr = "style = \"color: black;\"") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "bordered"), full_width = FALSE)
 ```
 
 # Visualização enterior com gráficos
@@ -360,8 +355,7 @@ top_tf_idf_palavras_decadas <- tf_idf_palavras_decadas %>%
 top_tf_idf_palavras_decadas %>%
   ggplot(aes(x = row, tf_idf, fill = decada)) +
     geom_col(show.legend = NULL) +
-    labs(x = NULL, y = "TF-IDF") + 
-    ggtitle("Palavras mais utilizadas com TF-IDF por decada") +
+    labs(x = NULL, y = NULL) +
     theme_lyrics() +  
     facet_wrap(~decada, ncol = 3, nrow = 3, scales = "free") +
     scale_x_continuous( breaks = top_tf_idf_palavras_decadas$row, labels = top_tf_idf_palavras_decadas$word) +
@@ -386,10 +380,3 @@ wordcloud2(wc[1:200, ],
 ```
 
 # Analise de sentimento <opcional>
-
-# Discussão
-
-Analizar de maneira "macro" o conjunto de dados, possibilitou avaliar como as letras evoluíram no decorrer do tempo em termos de suas letras, utilizando apenas processamento de texto natural. Considerando que a análise relacionada ao significado dessas mudanças no decorrer do tempo sejam subjetivas, por serem associadas a mudanças culturais, podemos avaliar a maneira como as letras se modificaram e como as palavras foram utilizadas nas décadas passadas nas letras de músicas do forró.
-
-...
-
