@@ -2,4 +2,4 @@
 
 Análise para o meu tcc em Ciência da Computação na Universidade Federal de Campina Grande
 
-Em breve, colocarei o pdf com a dissertação sobre a análise aqui.
+Em breve, adicionarei o pdf com a dissertação sobre a análise aqui.
